@@ -99,12 +99,10 @@ class AdminBot:
             """
             # Validate target channel
             try:
-                target.strip('@')
+                target.strip('@ ')
                 target_chat = await self.channel_bot.app.get_chat(target)
                 if not str(target_chat.type.value) in ["channel", "supergroup"]:
                     return False, f"Error: @{target} is not a channel", []
-                if target.count(" ") != 0:
-                    return False, f"Error: @{target} is not a valid channel name", []
                           
                 # Check bot's admin rights in target channel
                 bot_member = await self.channel_bot.app.get_chat_member(target_chat.id, "me")
@@ -123,7 +121,7 @@ class AdminBot:
             invalid_sources = []
             for source in sources:
                 try:
-                    source = source.strip('@')
+                    source = source.strip('@ ')
                     if not source: continue
                     source_chat = await self.channel_bot.app.get_chat(source)
                     if not source_chat.type.value in ["channel", "supergroup"]:
@@ -390,7 +388,7 @@ class AdminBot:
         if not self.is_admin(update.effective_user.id):
             return ConversationHandler.END
 
-        target = update.message.text.strip('@')
+        target = update.message.text
         
         status_msg = await update.message.reply_text("Validating target channel...")
         is_valid, error_msg, _ = await self.validate_channels(target, [])
@@ -416,7 +414,7 @@ class AdminBot:
         if not self.is_admin(update.effective_user.id):
             return ConversationHandler.END
 
-        sources = [s.strip('@') for s in update.message.text.split(', ')]
+        sources = [s for s in update.message.text.split(',')]
         
         status_msg = await update.message.reply_text("Validating source channels...")
         is_valid, error_msg, invalid_sources = await self.validate_channels(
@@ -565,7 +563,7 @@ class AdminBot:
             )
 
             if data["field"] == "sources":
-                new_sources = [s.strip('@') for s in update.message.text.split(',')]
+                new_sources = [s for s in update.message.text.split(',')]
                 
                 status_msg = await update.message.reply_text("Validating source channels...")
                 is_valid, error_msg, invalid_sources = await self.validate_channels(
