@@ -36,8 +36,8 @@ class ConfigManager:
             source_channels=source_channels,
             target_channel=target_channel,
             mistral_agent_id=mistral_agent_id,
-            post_interval_minutes=interval,
-            channel_theme=theme
+            channel_theme=theme,
+            post_interval_minutes=interval
         )
         
         # Check if channel already exists

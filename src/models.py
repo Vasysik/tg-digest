@@ -33,5 +33,6 @@ class ChannelConfig:
             'source_channels': self.source_channels,
             'target_channel': self.target_channel,
             'mistral_agent_id': self.mistral_agent_id,
+            'channel_theme': self.channel_theme,
             'post_interval_minutes': self.post_interval_minutes
         }
