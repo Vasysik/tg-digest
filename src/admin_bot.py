@@ -190,6 +190,118 @@ class AdminBot:
 
         elif query.data.startswith("channel_info_"):
             channel_name = query.data.replace("channel_info_", "")
+            channel = next((c for c in self.config_manager.channels if c.target_channel == channel_name), None)
+            
+            if channel:
+                text = (
+                    f"📺 Channel: @{channel.target_channel}\n\n"
+                    f"📡 Sources: {', '.join('@' + s for s in channel.source_channels)}\n"
+                    f"⏱ Interval: {channel.post_interval_minutes} minutes\n"
+                    f"🤖 Mistral Agent: {channel.mistral_agent_id or 'default'}"
+                )
+                await query.edit_message_text(
+                    text,
+                    reply_markup=self.get_channel_actions_keyboard(channel_name)
+                )
+            return CHOOSE_ACTION
+
+        elif query.data.startswith("edit_"):
+            if "_sources_" in query.data or "_interval_" in query.data or "_agent_" in query.data:
+                channel_name = query.data.split("_")[-1]
+                field_type = query.data.split("_")[1]
+                
+                self.temp_data[query.from_user.id] = {
+                    "channel": channel_name,
+                    "field": field_type
+                }
+                
+                if field_type == "sources":
+                    await query.edit_message_text(
+                        "Please send me the new source channels (comma-separated)\n"
+                        "Example: @channel1, @channel2, @channel3",
+                        reply_markup=InlineKeyboardMarkup([[
+                            InlineKeyboardButton("« Cancel", callback_data=f"channel_info_{channel_name}")
+                        ]])
+                    )
+                elif field_type == "interval":
+                    await query.edit_message_text(
+                        "Please send me the new post interval in minutes\n"
+                        "Example: 60",
+                        reply_markup=InlineKeyboardMarkup([[
+                            InlineKeyboardButton("« Cancel", callback_data=f"channel_info_{channel_name}")
+                        ]])
+                    )
+                elif field_type == "agent":
+                    await query.edit_message_text(
+                        "Please send me the new Mistral agent ID\n"
+                        "Send 'default' to use the default agent",
+                        reply_markup=InlineKeyboardMarkup([[
+                            InlineKeyboardButton("« Cancel", callback_data=f"channel_info_{channel_name}")
+                        ]])
+                    )
+                return EDIT_FIELD
+            
+            channel_name = query.data.replace("edit_", "")
+            await query.edit_message_text(
+                f"What would you like to edit for @{channel_name}?",
+                reply_markup=self.get_edit_fields_keyboard(channel_name)
+            )
+            return EDIT_CHANNEL
+
+        elif query.data.startswith("delete_"):
+            channel_name = query.data.replace("delete_", "")
+            await query.edit_message_text(
+                f"Are you sure you want to delete @{channel_name}?",
+                reply_markup=InlineKeyboardMarkup([
+                    [
+                        InlineKeyboardButton("✅ Yes", callback_data=f"confirm_delete_{channel_name}"),
+                        InlineKeyboardButton("❌ No", callback_data=f"channel_info_{channel_name}")
+                    ]
+                ])
+            )
+            return CONFIRM_DELETE
+
+        elif query.data.startswith("confirm_delete_"):
+            channel_name = query.data.replace("confirm_delete_", "")
+            if await self.channel_bot.remove_channel(channel_name):
+                self.config_manager.remove_channel(channel_name)
+                await query.edit_message_text(
+                    f"Channel @{channel_name} has been deleted! ✅",
+                    reply_markup=self.get_main_menu_keyboard()
+                )
+            else:
+                await query.edit_message_text(
+                    f"Failed to delete channel @{channel_name} ❌",
+                    reply_markup=self.get_main_menu_keyboard()
+                )
+            return CHOOSE_ACTION
+
+        elif query.data == "show_status":
+            status = await self.channel_bot.get_status()
+            await query.edit_message_text(
+                status,
+                reply_markup=InlineKeyboardMarkup([[
+                    InlineKeyboardButton("« Main Menu", callback_data="main_menu")
+                ]])
+            )
+            return CHOOSE_ACTION
+
+        elif query.data == "main_menu":
+            await query.edit_message_text(
+                "Main Menu:",
+                reply_markup=self.get_main_menu_keyboard()
+            )
+            return CHOOSE_ACTION
+
+        elif query.data == "cancel":
+            await query.edit_message_text(
+                "Operation cancelled.",
+                reply_markup=self.get_main_menu_keyboard()
+            )
+            return CHOOSE_ACTION
+
+        elif query.data.startswith("channel_info_"):
+            channel_name = query.data.replace("channel_info_", "")
             channel = next((c for c in self.config_manager.channels 
                             if c.target_channel == channel_name), None)
             
