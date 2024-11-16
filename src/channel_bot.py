@@ -45,7 +45,7 @@ class ChannelBot:
         self.managers[config.target_channel] = manager
         return manager
 
-    async def add_channel(self, target_channel: str, source_channels: list, interval: int, mistral_agent_id: Optional[str] = None) -> bool:
+    async def add_channel(self, target_channel: str, source_channels: list, interval: int, mistral_agent_id: Optional[str] = None, theme: Optional[str] = None) -> bool:
         """Add new channel to bot"""
         try:
             # Get or create channel config
@@ -53,6 +53,7 @@ class ChannelBot:
                 source_channels=source_channels,
                 target_channel=target_channel,
                 mistral_agent_id=mistral_agent_id or self.config_manager.config['default_mistral_agent'],
+                channel_theme=theme or '',
                 post_interval_minutes=interval
             )
             
