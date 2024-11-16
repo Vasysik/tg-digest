@@ -190,14 +190,16 @@ class AdminBot:
 
         elif query.data.startswith("channel_info_"):
             channel_name = query.data.replace("channel_info_", "")
-            channel = next((c for c in self.config_manager.channels if c.target_channel == channel_name), None)
+            channel = next((c for c in self.config_manager.channels 
+                            if c.target_channel == channel_name), None)
             
             if channel:
                 text = (
                     f"📺 Channel: @{channel.target_channel}\n\n"
                     f"📡 Sources: {', '.join('@' + s for s in channel.source_channels)}\n"
                     f"⏱ Interval: {channel.post_interval_minutes} minutes\n"
-                    f"🤖 Mistral Agent: {channel.mistral_agent_id or 'default'}"
+                    f"🤖 Mistral Agent: {channel.mistral_agent_id or 'default'}\n"
+                    f"🎯 Theme: {channel.channel_theme}"
                 )
                 await query.edit_message_text(
                     text,
@@ -206,7 +208,7 @@ class AdminBot:
             return CHOOSE_ACTION
 
         elif query.data.startswith("edit_"):
-            if "_sources_" in query.data or "_interval_" in query.data or "_agent_" in query.data:
+            if "_sources_" in query.data or "_interval_" in query.data or "_agent_" in query.data or "_theme_" in query.data:
                 channel_name = query.data.split("_")[-1]
                 field_type = query.data.split("_")[1]
                 
@@ -239,14 +241,15 @@ class AdminBot:
                             InlineKeyboardButton("« Cancel", callback_data=f"channel_info_{channel_name}")
                         ]])
                     )
+                elif field_type == "theme":
+                    await query.edit_message_text(
+                        "Please send me the new channel theme\n"
+                        "This helps create more relevant digests",
+                        reply_markup=InlineKeyboardMarkup([[
+                            InlineKeyboardButton("« Cancel", callback_data=f"channel_info_{channel_name}")
+                        ]])
+                    )
                 return EDIT_FIELD
-            
-            channel_name = query.data.replace("edit_", "")
-            await query.edit_message_text(
-                f"What would you like to edit for @{channel_name}?",
-                reply_markup=self.get_edit_fields_keyboard(channel_name)
-            )
-            return EDIT_CHANNEL
 
         elif query.data.startswith("delete_"):
             channel_name = query.data.replace("delete_", "")
