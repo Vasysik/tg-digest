@@ -15,6 +15,7 @@ class ChannelConfig:
     source_channels: List[str]
     target_channel: str
     mistral_agent_id: str
+    channel_theme: str
     post_interval_minutes: int
 
     @classmethod
@@ -23,6 +24,7 @@ class ChannelConfig:
             source_channels=data['source_channels'],
             target_channel=data['target_channel'],
             mistral_agent_id=data.get('mistral_agent_id'),
+            channel_theme=data.get('channel_theme', ''),
             post_interval_minutes=int(data['post_interval_minutes'])
         )
 
