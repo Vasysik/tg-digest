@@ -1,0 +1,5 @@
+.venv
+src/__pycache__
+config-old.json
+channel_bot.session
+channel_bot.session-journal
