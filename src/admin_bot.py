@@ -99,8 +99,6 @@ class AdminBot:
             """
             # Validate target channel
             try:
-                target = target.replace('@', '')
-                target = target.replace(' ', '')
                 target_chat = await self.channel_bot.app.get_chat(target)
                 if not str(target_chat.type.value) in ["channel", "supergroup"]:
                     return False, f"Error: @{target} is not a channel", []
@@ -122,8 +120,6 @@ class AdminBot:
             invalid_sources = []
             for source in sources:
                 try:
-                    source = source.replace('@', '')
-                    source = source.replace(' ', '')
                     if not source: continue
                     source_chat = await self.channel_bot.app.get_chat(source)
                     if not source_chat.type.value in ["channel", "supergroup"]:
@@ -390,7 +386,7 @@ class AdminBot:
         if not self.is_admin(update.effective_user.id):
             return ConversationHandler.END
 
-        target = update.message.text
+        target = update.message.text.strip('@ ')
         
         status_msg = await update.message.reply_text("Validating target channel...")
         is_valid, error_msg, _ = await self.validate_channels(target, [])
@@ -416,7 +412,7 @@ class AdminBot:
         if not self.is_admin(update.effective_user.id):
             return ConversationHandler.END
 
-        sources = [s for s in update.message.text.split(',')]
+        sources = [s.strip('@ ') for s in update.message.text.split(',')]
         
         status_msg = await update.message.reply_text("Validating source channels...")
         is_valid, error_msg, invalid_sources = await self.validate_channels(
@@ -565,7 +561,7 @@ class AdminBot:
             )
 
             if data["field"] == "sources":
-                new_sources = [s for s in update.message.text.split(',')]
+                new_sources = [s.strip('@ ') for s in update.message.text.split(',')]
                 
                 status_msg = await update.message.reply_text("Validating source channels...")
                 is_valid, error_msg, invalid_sources = await self.validate_channels(
