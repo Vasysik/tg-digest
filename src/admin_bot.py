@@ -99,10 +99,11 @@ class AdminBot:
             """
             # Validate target channel
             try:
+                target.lstrip('@')
                 target_chat = await self.channel_bot.app.get_chat(target)
                 if not str(target_chat.type.value) in ["channel", "supergroup"]:
                     return False, f"Error: @{target} is not a channel", []
-                if target.count("@") != 0 or target.count(" ") != 0:
+                if target.count(" ") != 0:
                     return False, f"Error: @{target} is not a valid channel name", []
                           
                 # Check bot's admin rights in target channel
@@ -122,11 +123,13 @@ class AdminBot:
             invalid_sources = []
             for source in sources:
                 try:
+                    source = source.strip().lstrip('@')
+                    if not source: continue
                     source_chat = await self.channel_bot.app.get_chat(source)
                     if not source_chat.type.value in ["channel", "supergroup"]:
                         invalid_sources.append(f"@{source} (not a channel)")
                         continue
-                    if source.count("@") != 0 or target.count(" ") != 0:
+                    if target.count(" ") != 0:
                         invalid_sources.append(f"@{source} (not a valid channel name)")
                         continue
                     try:
