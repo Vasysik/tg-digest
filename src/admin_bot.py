@@ -365,6 +365,14 @@ class AdminBot:
                         ]])
                     )
                 return EDIT_FIELD
+            else:
+                channel_name = query.data.replace("edit_", "")
+                logger.info(f"Opening edit menu for channel: {channel_name}")
+                await query.edit_message_text(
+                    f"What would you like to edit for @{channel_name}?",
+                    reply_markup=self.get_edit_fields_keyboard(channel_name)
+                )
+                return EDIT_CHANNEL
 
         elif query.data.startswith("delete_"):
             channel_name = query.data.replace("delete_", "")
