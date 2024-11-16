@@ -27,7 +27,7 @@ class ConfigManager:
             json.dump(channels_data, f, indent=2, ensure_ascii=False)
 
     def add_channel(self, target_channel: str, source_channels: List[str], 
-                   interval: int, mistral_agent_id: str = None) -> bool:
+                   interval: int, mistral_agent_id: str = None, theme: str = None) -> bool:
         """Add new channel configuration"""
         if not mistral_agent_id:
             mistral_agent_id = self.config['default_mistral_agent']
@@ -36,7 +36,8 @@ class ConfigManager:
             source_channels=source_channels,
             target_channel=target_channel,
             mistral_agent_id=mistral_agent_id,
-            post_interval_minutes=interval
+            post_interval_minutes=interval,
+            channel_theme=theme
         )
         
         # Check if channel already exists

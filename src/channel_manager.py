@@ -64,6 +64,7 @@ class ChannelManager:
         """Prepare data for digest creation"""
         return {
             'timestamp': datetime.now().isoformat(),
+            'channel_theme': self.config.channel_theme,
             'source_channels': self.config.source_channels,
             'posts': [vars(post) for post in self.posts],
             'stats': {
@@ -92,7 +93,7 @@ class ChannelManager:
                     agent_id=self.config.mistral_agent_id,
                     messages=[{
                         "role": "user",
-                        "content": f"Create an engaging channel post based on this data: {digest_data}"
+                        "content": f"Create an engaging and thematic digest channel post based on this data: {digest_data}"
                     }]
                 )
                 

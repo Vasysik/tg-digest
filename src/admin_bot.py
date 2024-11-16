@@ -22,6 +22,7 @@ logger = logging.getLogger('AdminBot')
     ADD_SOURCES,
     ADD_INTERVAL,
     ADD_AGENT,
+    ADD_THEME,
     EDIT_CHANNEL,
     EDIT_FIELD,
     CONFIRM_DELETE
@@ -70,6 +71,7 @@ class AdminBot:
             [InlineKeyboardButton("📺 Source Channels", callback_data=f"edit_sources_{channel}")],
             [InlineKeyboardButton("⏱ Post Interval", callback_data=f"edit_interval_{channel}")],
             [InlineKeyboardButton("🤖 Mistral Agent", callback_data=f"edit_agent_{channel}")],
+            [InlineKeyboardButton("🎯 Channel Theme", callback_data=f"edit_theme_{channel}")],
             [InlineKeyboardButton("« Back", callback_data=f"channel_info_{channel}")]
         ]
         return InlineKeyboardMarkup(keyboard)
@@ -388,6 +390,23 @@ class AdminBot:
             return ConversationHandler.END
 
         agent_id = None if update.message.text.lower() == 'skip' else update.message.text
+        self.temp_data[update.effective_user.id]["agent_id"] = agent_id
+
+        await update.message.reply_text(
+            "Please send me the channel theme\n"
+            "This helps create more relevant digests",
+            reply_markup=InlineKeyboardMarkup([[
+                InlineKeyboardButton("« Cancel", callback_data="cancel")
+            ]])
+        )
+        return ADD_THEME
+    
+    async def handle_theme_input(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Handle channel theme input"""
+        if not self.is_admin(update.effective_user.id):
+            return ConversationHandler.END
+
+        theme = update.message.text
         data = self.temp_data[update.effective_user.id]
 
         try:
@@ -395,13 +414,15 @@ class AdminBot:
                 data["target"],
                 data["sources"],
                 data["interval"],
-                agent_id
+                data["agent_id"],
+                theme
             ):
                 success = await self.channel_bot.add_channel(
                     data["target"],
                     data["sources"],
                     data["interval"],
-                    agent_id
+                    data["agent_id"],
+                    theme
                 )
                 
                 if success:
@@ -409,7 +430,8 @@ class AdminBot:
                         f"✅ Channel @{data['target']} added successfully!\n\n"
                         f"• Sources: {', '.join('@' + s for s in data['sources'])}\n"
                         f"• Interval: {data['interval']} minutes\n"
-                        f"• Agent: {agent_id or 'default'}",
+                        f"• Agent: {data['agent_id'] or 'default'}\n"
+                        f"• Theme: {theme}",
                         reply_markup=self.get_main_menu_keyboard()
                     )
                 else:
@@ -454,7 +476,8 @@ class AdminBot:
                 source_channels=channel.source_channels.copy(),
                 target_channel=channel.target_channel,
                 mistral_agent_id=channel.mistral_agent_id,
-                post_interval_minutes=channel.post_interval_minutes
+                post_interval_minutes=channel.post_interval_minutes,
+                channel_theme=channel.channel_theme
             )
 
             if data["field"] == "sources":
@@ -497,7 +520,8 @@ class AdminBot:
                     new_config.target_channel,
                     new_config.source_channels,
                     new_config.post_interval_minutes,
-                    new_config.mistral_agent_id
+                    new_config.mistral_agent_id,
+                    new_config.channel_theme
                 )
                 self.config_manager.save_channels()
                 
@@ -506,7 +530,8 @@ class AdminBot:
                     new_config.target_channel,
                     new_config.source_channels,
                     new_config.post_interval_minutes,
-                    new_config.mistral_agent_id
+                    new_config.mistral_agent_id,
+                    new_config.channel_theme
                 )
                 
                 await update.message.reply_text(
@@ -554,6 +579,10 @@ class AdminBot:
                 ],
                 ADD_AGENT: [
                     MessageHandler(filters.TEXT & ~filters.COMMAND, self.handle_agent_input),
+                    CallbackQueryHandler(self.button_callback, pattern="^cancel$")
+                ],
+                ADD_THEME: [
+                    MessageHandler(filters.TEXT & ~filters.COMMAND, self.handle_theme_input),
                     CallbackQueryHandler(self.button_callback, pattern="^cancel$")
                 ],
                 EDIT_CHANNEL: [
