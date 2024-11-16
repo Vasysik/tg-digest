@@ -99,7 +99,8 @@ class AdminBot:
             """
             # Validate target channel
             try:
-                target.strip('@ ')
+                target = target.replace('@', '')
+                target = target.replace(' ', '')
                 target_chat = await self.channel_bot.app.get_chat(target)
                 if not str(target_chat.type.value) in ["channel", "supergroup"]:
                     return False, f"Error: @{target} is not a channel", []
@@ -121,7 +122,8 @@ class AdminBot:
             invalid_sources = []
             for source in sources:
                 try:
-                    source = source.strip('@ ')
+                    source = source.replace('@', '')
+                    source = source.replace(' ', '')
                     if not source: continue
                     source_chat = await self.channel_bot.app.get_chat(source)
                     if not source_chat.type.value in ["channel", "supergroup"]:
