@@ -26,7 +26,7 @@ logger = logging.getLogger('AdminBot')
     EDIT_CHANNEL,
     EDIT_FIELD,
     CONFIRM_DELETE
-) = range(8)
+) = range(9)
 
 class AdminBot:
     def __init__(self, config_manager: ConfigManager, channel_bot: ChannelBot):
