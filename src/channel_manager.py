@@ -66,7 +66,7 @@ class ChannelManager:
                         channel_title=message.chat.title or message.chat.username,
                         text=text,
                         date=message.date,
-                        link=message.link if not message.is_topic_message else None,
+                        link=message.link,
                         media_type=media_type
                     )
                     self.posts.append(post)
