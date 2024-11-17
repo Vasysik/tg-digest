@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 from mistralai import Mistral
 from pyrogram import Client
 from pyrogram.types import Message
@@ -27,38 +27,90 @@ class ChannelManager:
         logger.info(f"Monitoring channels: {', '.join(config.source_channels)}")
 
     async def process_channel_post(self, message: Message):
-        """Process new post from source channel"""
-        if not message.chat or not message.chat.username:
-            return
-            
-        if message.chat.username not in self.config.source_channels:
-            return
-                
+        """Process new post from source channel with enhanced logging and checks"""
         try:
+            if not message.chat or not message.chat.username:
+                logger.debug(f"Skipping message: Missing chat or username")
+                return
+
+            if message.chat.username not in self.config.source_channels:
+                logger.debug(f"Skipping message: Channel {message.chat.username} not in source list")
+                return
+            
+            logger.debug(f"""
+            Processing message:
+            ID: {message.id}
+            Chat: {message.chat.username}
+            Type: {message.media_group_id if message.media_group_id else 'single message'}
+            Has text: {bool(message.text)}
+            Has caption: {bool(message.caption)}
+            Service message: {bool(message.service)}
+            Is sponsored: {hasattr(message, 'sponsor') and bool(message.sponsor)}
+            Media type: {message.media.value if message.media else 'none'}
+            """)
+
+            if message.service:
+                logger.debug(f"Skipping service message type: {message.service}")
+                return
+            
+            if hasattr(message, 'sponsor') and message.sponsor:
+                logger.debug("Skipping sponsored message")
+                return
+            
             async with self.post_lock:
-                # Get message text/caption and any media
-                text = message.text or message.caption or ""
+                text = self._extract_message_text(message)
+                media_type = self._detect_media_type(message)
                 
-                # Handle media if present
-                media_type = None
-                if message.photo:
-                    media_type = "photo"
-                elif message.video:
-                    media_type = "video"
-                elif message.document:
-                    media_type = "document"
-                    
-                post = ChannelPost(
-                    channel_title=message.chat.title or message.chat.username,
-                    text=text,
-                    date=message.date,
-                    link=message.link,
-                    media_type=media_type
-                )
-                self.posts.append(post)
-                logger.info(f"Saved post from {post.channel_title}")
+                if text or media_type:
+                    post = ChannelPost(
+                        channel_title=message.chat.title or message.chat.username,
+                        text=text,
+                        date=message.date,
+                        link=message.link if not message.is_topic_message else None,
+                        media_type=media_type
+                    )
+                    self.posts.append(post)
+                    logger.info(f"Successfully saved post from {post.channel_title}")
+                    logger.debug(f"Post content length: {len(text) if text else 0}, Media: {media_type}")
+                else:
+                    logger.debug("Skipping message: No content to save")
+
         except Exception as e:
-            logger.error(f"Error processing channel post: {e}")
+            logger.error(f"Error processing channel post: {str(e)}", exc_info=True)
+
+    def _extract_message_text(self, message: Message) -> Optional[str]:
+        """Extract text content from message with fallback to caption"""
+        text = message.text or message.caption
+        
+        if not text and message.media:
+            if message.photo and message.caption:
+                text = message.caption
+            elif message.video and message.caption:
+                text = message.caption
+            elif message.document and message.caption:
+                text = message.caption
+        
+        return text.strip() if text else None
+
+    def _detect_media_type(self, message: Message) -> Optional[str]:
+        """Detect media type from message"""
+        if message.media_group_id:
+            if message.photo:
+                return "photo_group"
+            elif message.video:
+                return "video_group"
+        elif message.photo:
+            return "photo"
+        elif message.video:
+            return "video"
+        elif message.document:
+            return "document"
+        elif message.animation:
+            return "animation"
+        elif message.sticker:
+            return "sticker"
+        
+        return None
 
     def _prepare_digest_data(self) -> dict:
         """Prepare data for digest creation"""
