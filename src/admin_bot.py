@@ -279,7 +279,7 @@ class AdminBot:
 
         elif query.data.startswith("edit_"):
             if "_sources_" in query.data or "_interval_" in query.data or "_agent_" in query.data or "_theme_" in query.data:
-                channel_name = query.data.split("_")[-1]
+                channel_name = "_".join(query.data.split("_")[2:])
                 field_type = query.data.split("_")[1]
                 
                 self.temp_data[query.from_user.id] = {
