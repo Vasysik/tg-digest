@@ -105,15 +105,28 @@ class ChannelBot:
         """Handle incoming messages from all channels"""
         try:
             if not message.chat:
+                logger.debug(f"Skipping message: no chat object")
                 return
                 
             chat_username = message.chat.username
             if not chat_username:
+                logger.debug(f"Skipping message: no chat username")
                 return
                 
+            logger.debug(f"Received message from chat: {chat_username}")
+            logger.debug(f"Active managers: {[m.config.target_channel for m in self.managers.values()]}")
+            
+            matched_managers = 0
             for manager in self.managers.values():
+                logger.debug(f"Checking manager for {manager.config.target_channel}")
+                logger.debug(f"Source channels: {manager.config.source_channels}")
+                
                 if chat_username in manager.config.source_channels:
+                    logger.debug(f"Processing message for {manager.config.target_channel}")
+                    matched_managers += 1
                     await manager.process_channel_post(message)
+            logger.debug(f"Message processed by {matched_managers} managers")
+            
         except Exception as e:
             logger.error(f"Error handling message: {e}")
 
