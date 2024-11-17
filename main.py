@@ -9,6 +9,9 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
+logging.getLogger('pyrogram').setLevel(logging.WARNING)
+logging.getLogger('httpcore').setLevel(logging.WARNING)
+logging.getLogger('telegram').setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 async def shutdown(channel_bot, admin_bot):
